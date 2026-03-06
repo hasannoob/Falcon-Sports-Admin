@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falcon Sports - Admin Panel (Fixed Time Issue)</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --bg: #0b0f1a; 
+            --card: #161b2c; 
+            --primary: #3b82f6; 
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --text: #f8fafc; 
+            --border: #2d3748;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .login-box { background: var(--card); padding: 40px; border-radius: 20px; text-align: center; width: 320px; border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: var(--card); padding: 10px; border-radius: 12px; border: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: #94a3b8; cursor: pointer; font-weight: 600; border-radius: 8px; transition: 0.3s; }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        .card { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px rgba(0,0,0,0.5); margin-bottom: 30px; border: 1px solid var(--border); }
+        h2 { margin: 0 0 20px 0; font-size: 1.4rem; color: #fff; display: flex; align-items: center; gap: 10px; }
+        h2 i { color: var(--primary); }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { display: block; margin: 15px 0 5px; font-size: 13px; color: #94a3b8; font-weight: 500; }
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #0b0f1a; color: white; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--primary); }
+
+        .btn { padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; margin-top: 20px; }
+        .btn-green { background: var(--secondary); color: white; margin-top: 10px; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-yellow { background: #f59e0b; color: white; }
+        .btn-fetch { background: #6366f1; color: white; margin-top: 10px; }
+
+        .dynamic-row { border: 1px solid var(--border); padding: 15px; margin-top: 15px; border-radius: 10px; background: rgba(255,255,255,0.02); position: relative; }
+        .remove-row { position: absolute; top: 10px; right: 10px; color: var(--danger); cursor: pointer; font-size: 1.2rem; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { background: rgba(255,255,255,0.05); color: #94a3b8; }
+        
+        .hidden { display: none; }
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="login-overlay">
+    <div class="login-box">
+        <i class="fa-solid fa-lock" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
+        <h2>Admin Access</h2>
+        <input type="password" id="admin-pin" placeholder="Enter PIN (1234)" style="text-align: center; font-size: 18px;">
+        <button class="btn btn-primary" onclick="checkLogin()">LOGIN</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('match-tab')"><i class="fa-solid fa-trophy"></i> Match Management</button>
+        <button class="tab-btn" onclick="showTab('broadcast-tab')"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Broadcaster</button>
+    </div>
+
+    <!-- TAB 1: MATCH FORM -->
+    <div id="match-tab" class="tab-content">
+        <div class="card">
+            <h2 id="match-form-title"><i class="fa-solid fa-plus-circle"></i> Add/Edit Match</h2>
+            <input type="hidden" id="edit-match-id">
+            
+            <div class="grid">
+                <div>
+                    <label>Team 1 Name</label>
+                    <input type="text" id="t1-name" placeholder="Team 1">
+                    <label>Team 1 Logo URL</label>
+                    <input type="text" id="t1-logo" placeholder="https://...">
+                </div>
+                <div>
+                    <label>Team 2 Name</label>
+                    <input type="text" id="t2-name" placeholder="Team 2">
+                    <label>Team 2 Logo URL</label>
+                    <input type="text" id="t2-logo" placeholder="https://...">
+                </div>
+            </div>
+
+            <div class="grid">
+                <div><label>League Name</label><input type="text" id="league-title" placeholder="La Liga"></div>
+                <div><label>League Logo URL</label><input type="text" id="league-logo" placeholder="https://..."></div>
+            </div>
+
+            <div class="grid">
+                <div><label>Match Start Time</label><input type="datetime-local" id="match-time"></div>
+                <div><label>Match End Time</label><input type="datetime-local" id="match-end-time"></div>
+            </div>
+
+            <label>Sport Type</label>
+            <select id="sport-type">
+                <option value="CRICKET">CRICKET</option>
+                <option value="FOOTBALL">FOOTBALL</option>
+                <option value="OTHER">OTHER</option>
+            </select>
+
+            <div id="stream-links-container">
+                <h3 style="margin-top:25px; font-size:16px;">Stream Channels</h3>
+            </div>
+            <button class="btn btn-green" onclick="addStreamRow()"><i class="fa-solid fa-plus"></i> Add Another Channel</button>
+            
+            <button class="btn btn-primary" id="save-btn" onclick="saveMatch()">PUBLISH MATCH</button>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-list"></i> Managed Matches</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>Match</th><th>Sport</th><th>Time</th><th>Action</th></tr></thead>
+                    <tbody id="match-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: AUTO BROADCASTER -->
+    <div id="broadcast-tab" class="tab-content hidden">
+        <div class="card">
+            <h2><i class="fa-solid fa-magnifying-glass-chart"></i> Auto Fetch Broadcasters</h2>
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label>Match Name (e.g. Argentina vs France)</label>
+                    <input type="text" id="search-match-name" placeholder="Enter match name...">
+                </div>
+                <button class="btn btn-fetch" id="btn-fetch-logic" onclick="autoFetchBroadcasters()" style="margin-bottom: 2px;">
+                    <div class="loader" id="fetch-loader"></div> <i class="fa-solid fa-bolt"></i> FETCH
+                </button>
+            </div>
+            <hr style="border: 0.5px solid var(--border); margin: 30px 0;">
+            <label>League Name</label>
+            <input type="text" id="bc-league-name" placeholder="e.g. English Premier League">
+            <label>Sport Type</label>
+            <select id="bc-sport-type"><option value="FOOTBALL">FOOTBALL</option><option value="CRICKET">CRICKET</option></select>
+            <div id="broadcaster-channels-container"><h3>Channels List</h3></div>
+            <button class="btn btn-green" onclick="addBroadcasterRow()"><i class="fa-solid fa-plus"></i> Add Channel Manually</button>
+            <button class="btn btn-primary" onclick="saveLeaguePlaylist()">SAVE BROADCASTER LIST</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. CONFIGURATION ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcROeTFNV6haP8ZrnIFH2iuC9oNS6Ccvc",
+      authDomain: "live-bd-24.firebaseapp.com",
+      databaseURL: "https://live-bd-24-default-rtdb.firebaseio.com",
+      projectId: "live-bd-24",
+      storageBucket: "live-bd-24.firebasestorage.app",
+      messagingSenderId: "171477012668",
+      appId: "1:171477012668:web:f2e694da9474ef236e40b9"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const SERPER_API_KEY = "d2dcfa24e51c108684d843ea059fded830538257";
+
+    // --- TIMEZONE FIX HELPER ---
+    function formatToLocalISO(dateStr) {
+        if (!dateStr) return "";
+        // If it's already in YYYY-MM-DDTHH:MM format, return as is
+        if(dateStr.length === 16) return dateStr;
+        
+        const date = new Date(dateStr);
+        if (isNaN(date)) return dateStr;
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // --- AUTH & TABS ---
+    function checkLogin() {
+        if(document.getElementById('admin-pin').value === "1234") {
+            sessionStorage.setItem("adminLoggedIn", "true");
+            document.getElementById('login-overlay').style.display = 'none';
+        } else { alert("Wrong PIN!"); }
+    }
+    if(sessionStorage.getItem("adminLoggedIn") === "true") document.getElementById('login-overlay').style.display = 'none';
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.remove('hidden');
+        if(event) event.currentTarget.classList.add('active');
+    }
+
+    function addStreamRow(name="", logo="", url="", api="") {
+        const container = document.getElementById('stream-links-container');
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <i class="fa-solid fa-circle-xmark remove-row" onclick="this.parentElement.remove()"></i>
+            <div class="grid">
+                <input type="text" class="link-name" value="${name}" placeholder="Channel Name">
+                <input type="text" class="link-logo" value="${logo}" placeholder="Logo URL">
+            </div>
+            <input type="text" class="link-url" value="${url}" placeholder="m3u8/mpd/iframe Link" style="margin-top:10px;">
+            <input type="text" class="link-api" value="${api}" placeholder="DRM (kid:key) - Optional" style="margin-top:10px;">
+        `;
+        container.appendChild(div);
+    }
+
+    function addBroadcasterRow(name="", logo="") {
+        const container = document.getElementById('broadcaster-channels-container');
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <i class="fa-solid fa-circle-xmark remove-row" onclick="this.parentElement.remove()"></i>
+            <div class="grid">
+                <input type="text" class="bc-chan-name" value="${name}" placeholder="Channel Name">
+                <input type="text" class="bc-chan-logo" value="${logo}" placeholder="Logo URL">
+            </div>
+        `;
+        container.appendChild(div);
+    }
+
+    // --- MATCH SAVING (FIXED TIME) ---
+    async function saveMatch() {
+        const id = document.getElementById('edit-match-id').value || Date.now();
+        const linkNames = document.getElementsByClassName('link-name');
+        const linkLogos = document.getElementsByClassName('link-logo');
+        const linkUrls = document.getElementsByClassName('link-url');
+        const linkApis = document.getElementsByClassName('link-api');
+
+        let streams = [];
+        for(let i=0; i<linkNames.length; i++){
+            if(linkUrls[i].value) streams.push({ 
+                name: linkNames[i].value, logo: linkLogos[i].value, 
+                link: linkUrls[i].value, api: linkApis[i].value 
+            });
+        }
+
+        const matchData = {
+            id: id,
+            team1Name: document.getElementById('t1-name').value,
+            team1Logo: document.getElementById('t1-logo').value,
+            team2Name: document.getElementById('t2-name').value,
+            team2Logo: document.getElementById('t2-logo').value,
+            leagueTitle: document.getElementById('league-title').value,
+            leagueLogo: document.getElementById('league-logo').value,
+            // Direct value instead of toISOString to prevent timezone shift
+            matchTime: document.getElementById('match-time').value, 
+            matchEndTime: document.getElementById('match-end-time').value,
+            sportType: document.getElementById('sport-type').value,
+            streamLinks: streams
+        };
+
+        await database.ref('matches/' + id).set(matchData);
+        alert("Published Successfully!");
+        location.reload();
+    }
+
+    function loadData() {
+        database.ref('matches').on('value', snap => {
+            const list = document.getElementById('match-list');
+            list.innerHTML = "";
+            const data = snap.val() || {};
+            Object.keys(data).forEach(k => {
+                const m = data[k];
+                list.innerHTML += `<tr>
+                    <td>${m.team1Name} vs ${m.team2Name}</td>
+                    <td>${m.sportType}</td>
+                    <td>${m.matchTime ? m.matchTime.replace('T', ' ') : 'N/A'}</td>
+                    <td>
+                        <button class="btn-yellow" onclick="editMatch('${k}')"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-danger" onclick="deleteItem('matches/${k}')"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        });
+    }
+
+    function editMatch(id) {
+        database.ref('matches/'+id).once('value', snap => {
+            const m = snap.val();
+            document.getElementById('edit-match-id').value = id;
+            document.getElementById('t1-name').value = m.team1Name;
+            document.getElementById('t1-logo').value = m.team1Logo;
+            document.getElementById('t2-name').value = m.team2Name;
+            document.getElementById('t2-logo').value = m.team2Logo;
+            document.getElementById('league-title').value = m.leagueTitle;
+            document.getElementById('league-logo').value = m.leagueLogo;
+            document.getElementById('sport-type').value = m.sportType;
+
+            // Loading time exactly as it was saved
+            document.getElementById('match-time').value = formatToLocalISO(m.matchTime);
+            document.getElementById('match-end-time').value = formatToLocalISO(m.matchEndTime);
+
+            document.getElementById('stream-links-container').innerHTML = "<h3>Stream Channels</h3>";
+            if(m.streamLinks) {
+                m.streamLinks.forEach(l => addStreamRow(l.name, l.logo, l.link, l.api));
+            }
+            
+            document.getElementById('save-btn').innerText = "UPDATE MATCH";
+            window.scrollTo(0,0);
+        });
+    }
+
+    async function deleteItem(path) { if(confirm("Are you sure?")) await database.ref(path).remove(); }
+
+    window.onload = () => { loadData(); addStreamRow(); addBroadcasterRow(); };
+</script>
+</body>
+</html>
