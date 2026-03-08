@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Falcon Admin - Full Panel</title>
+    <title>Falcon Admin</title>
     
     <!-- Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -68,12 +68,7 @@
 
     <!-- 3. MAIN CONTENT -->
     <main class="flex-1 md:ml-[260px] p-6 md:p-12">
-        <header class="md:hidden flex items-center gap-4 mb-8">
-            <button onclick="toggleSidebar()" class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-bars"></i></button>
-            <h1 class="font-black text-slate-800 uppercase tracking-tighter">Falcon Dashboard</h1>
-        </header>
-
-        <!-- Tab: Overview -->
+        <!-- Dashboard Overview -->
         <section id="tab-dash">
             <h1 class="text-3xl font-black mb-10 text-slate-800 tracking-tight">System Status</h1>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -88,7 +83,7 @@
             </div>
         </section>
 
-        <!-- Tab: Matches (DRM Supported) -->
+        <!-- Match Management -->
         <section id="tab-mat" class="hidden">
             <div class="flex justify-between items-center mb-10">
                 <h1 class="text-3xl font-black text-slate-800 tracking-tight">Matches</h1>
@@ -108,7 +103,7 @@
                 </div>
                 <select id="sc" class="mb-8"><option value="FOOTBALL">FOOTBALL</option><option value="CRICKET">CRICKET</option></select>
                 
-                <h4 class="font-black text-slate-800 mb-4 uppercase text-[10px] tracking-widest border-b pb-2">Stream Servers (MPD/M3U8)</h4>
+                <h4 class="font-black text-slate-800 mb-4 uppercase text-[10px] tracking-widest border-b pb-2">Stream Servers</h4>
                 <div id="s-list" class="space-y-4"></div>
                 <button onclick="addS()" class="text-rose-600 font-bold text-xs mt-3 underline tracking-widest uppercase">+ Add Server</button>
 
@@ -128,26 +123,42 @@
             </div>
         </section>
 
-        <!-- Tab: Broadcasters (AI Section Restored) -->
+        <!-- Fixed Broadcaster Tab with Football/Cricket Option -->
         <section id="tab-bc" class="hidden">
             <h1 class="text-3xl font-black mb-10 text-slate-800 tracking-tight">Broadcasting Channels</h1>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div class="glass-card h-fit border-t-8 border-blue-600">
-                    <h3 class="font-black text-slate-800 mb-6 uppercase text-[10px] tracking-widest">AI Channel Generator</h3>
+                    <h3 class="font-black text-slate-800 mb-6 uppercase text-[10px] tracking-widest">Setup Broadcast List</h3>
+                    
                     <div class="space-y-4 mb-6">
-                        <div><label class="text-[10px] font-bold text-slate-400 ml-2 mb-1 block">MATCH NAME</label><input type="text" id="bc-match-name" placeholder="e.g. Argentina vs Brazil"></div>
-                        <div><label class="text-[10px] font-bold text-slate-400 ml-2 mb-1 block">LEAGUE NAME</label><input type="text" id="bc-league-name" placeholder="e.g. World Cup Qualifiers"></div>
+                        <!-- New Sport Selector -->
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 ml-2 mb-1 block">SPORT TYPE (FILTER)</label>
+                            <select id="bc-sport-type" class="mb-2">
+                                <option value="FOOTBALL">FOOTBALL</option>
+                                <option value="CRICKET">CRICKET</option>
+                            </select>
+                        </div>
+                        
+                        <div><label class="text-[10px] font-bold text-slate-400 ml-2 mb-1 block">LEAGUE NAME (Same as Match League)</label><input type="text" id="bc-league-name" placeholder="e.g. Premier League"></div>
+                        
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">AI Fetch (Optional)</p>
+                            <input type="text" id="bc-match-name" placeholder="Match Name for AI Search" class="mb-3">
+                            <button onclick="aiFetchChannels()" id="ai-btn" class="w-full bg-blue-100 text-blue-600 py-3 rounded-xl font-bold uppercase text-[10px] flex items-center justify-center gap-3">
+                                <span id="ai-btn-txt"><i class="fas fa-wand-magic-sparkles"></i> Auto Fetch Channels</span>
+                                <span id="ai-loader" class="loader hidden"></span>
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="aiFetchChannels()" id="ai-btn" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg flex items-center justify-center gap-3 hover:bg-blue-700 transition">
-                        <span id="ai-btn-txt"><i class="fas fa-wand-magic-sparkles mr-2"></i> Auto Fetch Channels</span>
-                        <span id="ai-loader" class="loader hidden"></span>
-                    </button>
-                    <hr class="my-8 border-slate-100">
-                    <h4 class="font-black text-slate-800 mb-4 uppercase text-[10px] tracking-widest">Result Channels</h4>
+
+                    <h4 class="font-black text-slate-800 mb-4 uppercase text-[10px] tracking-widest border-b pb-2">Channels</h4>
                     <div id="bc-rows-container"></div>
                     <button onclick="addBCField()" class="text-blue-600 font-bold text-xs mt-3 underline mb-10">+ ADD CHANNEL MANUALLY</button>
-                    <button onclick="saveBCList()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest">Save Broadcasting List</button>
+                    
+                    <button onclick="saveBCList()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl">Save Broadcasting List</button>
                 </div>
+
                 <div>
                     <h3 class="font-black text-slate-400 mb-6 uppercase text-[10px] tracking-widest">Active League Playlists</h3>
                     <div id="bc-active-container" class="space-y-4"></div>
@@ -162,6 +173,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Login Logic
         function login() { if(document.getElementById('p-in').value === "1234") { document.getElementById('login-overlay').classList.add('hidden'); localStorage.setItem('falcon_session', 'ok'); } else alert("PIN Wrong!"); }
         if(localStorage.getItem('falcon_session') === 'ok') document.getElementById('login-overlay').classList.add('hidden');
         function logout() { localStorage.removeItem('falcon_session'); location.reload(); }
@@ -175,7 +187,7 @@
             if(window.innerWidth < 768) toggleSidebar();
         }
 
-        // MATCH LOGIC WITH KEY-ID SUPPORT
+        // --- MATCH LOGIC ---
         let editId = null;
         function openForm(show = true) { editId = null; document.getElementById('m-form').classList.toggle('hidden', !show); document.getElementById('s-list').innerHTML = ""; if(show) addS(); }
 
@@ -183,16 +195,9 @@
             const d = document.createElement('div'); 
             d.className = "bg-slate-50 p-4 rounded-xl border border-slate-200 relative space-y-3"; 
             d.innerHTML = `
-                <div class="flex gap-4">
-                    <input type="text" class="sn flex-1" placeholder="Server Name" value="${n}">
-                    <input type="text" class="su flex-[2]" placeholder="MPD/M3U8 Link" value="${u}">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" class="skid" placeholder="Key ID (ClearKey)" value="${kid}">
-                    <input type="text" class="skey" placeholder="Key (ClearKey)" value="${key}">
-                </div>
-                <i class="fas fa-times text-red-500 cursor-pointer absolute top-2 right-3" onclick="this.parentElement.remove()"></i>
-            `; 
+                <div class="flex gap-4"><input type="text" class="sn flex-1" placeholder="Server Name" value="${n}"><input type="text" class="su flex-[2]" placeholder="Link" value="${u}"></div>
+                <div class="grid grid-cols-2 gap-4"><input type="text" class="skid" placeholder="Key ID" value="${kid}"><input type="text" class="skey" placeholder="Key" value="${key}"></div>
+                <i class="fas fa-times text-red-500 cursor-pointer absolute top-2 right-3" onclick="this.parentElement.remove()"></i>`; 
             document.getElementById('s-list').appendChild(d); 
         }
 
@@ -219,64 +224,77 @@
             });
         }
 
-        // BROADCASTER LOGIC (RESTORED)
+        // --- UPDATED BROADCASTER LOGIC ---
         function addBCField(n="", l="") {
             const d = document.createElement('div');
             d.className = "flex gap-2 mb-2 bg-slate-50 p-2 rounded-xl border border-slate-100 relative";
-            d.innerHTML = `<input type="text" class="bn" placeholder="TV Channel" value="${n}"><input type="text" class="bl" placeholder="Logo URL" value="${l}"><i class="fas fa-times text-rose-500 p-2 cursor-pointer" onclick="this.parentElement.remove()"></i>`;
+            d.innerHTML = `<input type="text" class="bn" placeholder="Channel Name" value="${n}"><input type="text" class="bl" placeholder="Logo URL" value="${l}"><i class="fas fa-times text-rose-500 p-2 cursor-pointer" onclick="this.parentElement.remove()"></i>`;
             document.getElementById('bc-rows-container').appendChild(d);
         }
 
         async function aiFetchChannels() {
             const matchName = document.getElementById('bc-match-name').value;
-            const leagueName = document.getElementById('bc-league-name').value;
-            if(!matchName || !leagueName) return alert("Fill Match and League boxes!");
+            if(!matchName) return alert("Enter match name for AI!");
             const btnTxt = document.getElementById('ai-btn-txt'), loader = document.getElementById('ai-loader');
             btnTxt.classList.add('hidden'); loader.classList.remove('hidden');
             try {
                 const res = await fetch("https://google.serper.dev/search", {
                     method: "POST",
                     headers: { "X-API-KEY": "d2dcfa24e51c108684d843ea059fded830538257", "Content-Type": "application/json" },
-                    body: JSON.stringify({ q: `${matchName} ${leagueName} official broadcasters` })
+                    body: JSON.stringify({ q: `${matchName} official broadcasting channels list` })
                 });
                 const data = await res.json();
-                const keys = ["Star Sports", "Sony Ten", "Sky Sports", "ESPN", "BeIN Sports", "SuperSport", "JioCinema", "T Sports", "GTV", "Ptv Sports"];
+                const keys = ["Star Sports", "Sony Ten", "Sky Sports", "ESPN", "BeIN Sports", "SuperSport", "JioCinema", "T Sports", "GTV", "Ptv Sports", "A Sports", "Willow TV", "FanCode"];
                 const raw = JSON.stringify(data).toLowerCase();
                 let found = []; keys.forEach(k => { if(raw.includes(k.toLowerCase())) found.push(k); });
                 if(found.length > 0) {
                     document.getElementById('bc-rows-container').innerHTML = "";
                     [...new Set(found)].forEach(f => addBCField(f));
-                } else alert("AI found nothing. Add manually.");
-            } catch(e) { alert("AI Error!"); }
+                } else alert("AI couldn't find channels. Please add manually.");
+            } catch(e) { alert("API Error!"); }
             finally { btnTxt.classList.remove('hidden'); loader.classList.add('hidden'); }
         }
 
         async function saveBCList() {
+            const sport = document.getElementById('bc-sport-type').value; // Now dynamic
             const league = document.getElementById('bc-league-name').value;
             const names = document.querySelectorAll('.bn'), logos = document.querySelectorAll('.bl');
             let channels = []; names.forEach((n, i) => { if(n.value) channels.push({name: n.value, logo: logos[i].value}); });
-            if(!league) return alert("League Name mandatory!");
-            await db.ref(`league_playlists/FOOTBALL/${Date.now()}`).set({ league: league, channels: channels });
-            alert("Saved!"); location.reload();
+            
+            if(!league) return alert("League Name is mandatory!");
+            if(channels.length === 0) return alert("Add at least one channel!");
+
+            // Saves to league_playlists/FOOTBALL/... or league_playlists/CRICKET/...
+            await db.ref(`league_playlists/${sport}/${Date.now()}`).set({ league: league, channels: channels });
+            alert("Broadcaster Playlist Saved Successfully!"); 
+            location.reload();
         }
 
-        // LOAD DATA
+        // --- DATA LOAD LOGIC ---
         function load() {
+            // Load Matches
             db.ref('matches').on('value', s => {
                 const b = document.getElementById('m-list-tbody'); const data = s.val() || {}; b.innerHTML = "";
                 document.getElementById('c-m').innerText = Object.keys(data).length;
-                Object.values(data).forEach(m => { b.innerHTML += `<tr class="border-b hover:bg-slate-50 transition"><td class="p-6"><p class="font-bold text-slate-800 uppercase text-sm">${m.team1Name} vs ${m.team2Name}</p><span class="text-[9px] text-slate-400 font-bold uppercase">${m.leagueTitle}</span></td><td class="p-6 text-right flex justify-end gap-3"><button onclick="editMatch('${m.id}')" class="w-10 h-10 border rounded-xl flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button><button onclick="del('matches/${m.id}')" class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center"><i class="fas fa-trash text-xs"></i></button></td></tr>`; });
+                Object.values(data).forEach(m => { b.innerHTML += `<tr class="border-b hover:bg-slate-50 transition"><td class="p-6"><p class="font-bold text-slate-800 uppercase text-sm">${m.team1Name} vs ${m.team2Name}</p><span class="text-[9px] text-slate-400 font-bold uppercase">${m.leagueTitle} (${m.sportType})</span></td><td class="p-6 text-right flex justify-end gap-3"><button onclick="editMatch('${m.id}')" class="w-10 h-10 border rounded-xl flex items-center justify-center"><i class="fas fa-edit text-xs"></i></button><button onclick="del('matches/${m.id}')" class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center"><i class="fas fa-trash text-xs"></i></button></td></tr>`; });
             });
+
+            // Load Playlists
             db.ref('league_playlists').on('value', s => {
                 const b = document.getElementById('bc-active-container'); const data = s.val() || {}; b.innerHTML = "";
-                let count = 0; Object.keys(data).forEach(sp => { Object.keys(data[sp]).forEach(id => {
-                    const item = data[sp][id]; count++; b.innerHTML += `<div class="glass-card flex justify-between items-center border-l-8 border-rose-500"><div><h4 class="font-black text-slate-800 text-sm uppercase">${item.league}</h4><p class="text-[9px] font-bold text-rose-400 uppercase">${sp}</p></div><button onclick="del('league_playlists/${sp}/${id}')" class="text-rose-500"><i class="fas fa-trash-alt"></i></button></div>`;
-                }); });
+                let count = 0; 
+                Object.keys(data).forEach(sp => { 
+                    Object.keys(data[sp]).forEach(id => {
+                        const item = data[sp][id]; count++; 
+                        b.innerHTML += `<div class="glass-card flex justify-between items-center border-l-8 border-rose-500"><div><h4 class="font-black text-slate-800 text-sm uppercase">${item.league}</h4><p class="text-[9px] font-bold text-rose-400 uppercase">${sp}</p></div><button onclick="del('league_playlists/${sp}/${id}')" class="text-rose-500"><i class="fas fa-trash-alt"></i></button></div>`;
+                    }); 
+                });
                 document.getElementById('c-l').innerText = count;
             });
         }
 
-        async function del(p) { if(confirm("Delete?")) await db.ref(p).remove(); }
+        async function del(p) { if(confirm("Are you sure you want to delete this?")) await db.ref(p).remove(); }
+        
         window.onload = () => { load(); addBCField(); tab('dash'); };
     </script>
 </body>
